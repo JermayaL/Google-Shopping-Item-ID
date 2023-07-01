@@ -1,0 +1,176 @@
+function main() {
+const settings_url="https://docs.google.com/spreadsheets/d/1vGy4zD3tfGKRbJEhi-2SDzyqCb6pifK_TRGZ2By_bYk/copy" 
+const ss=SpreadsheetApp.openByUrl(settings_url)
+const sh=ss.getSheetByName("Settings")
+const arrSh=sh.getDataRange().getValues() 
+arrSh.shift()
+for (const row of arrSh){
+const customerId=row[0]
+if (customerId=="") continue
+Logger.log(`Starting working with customer id - ${customerId}`)
+  
+try{  
+accountIterator=AdsManagerApp.accounts().withIds([customerId]).get()}
+catch (e) {
+Logger.log(`Didn't find client account ${customerId}`)
+continue;  
+} 
+if(accountIterator.totalNumEntities()==0) {
+Logger.log(`Didn't find client account ${customerId}`)
+continue;  
+}
+AdsManagerApp.select(accountIterator.next())
+
+let sheet = ss.getSheetByName(row[0])
+if (sheet==null) {
+  const sheetTemplate=ss.getSheetByName("Template")
+  sheet=sheetTemplate.copyTo(ss);
+  sheet.setName(row[0])
+  sheet.showSheet()
+}
+
+sub_main(sheet,row[1]) 
+}
+}
+
+function sub_main(sh, merchant) {
+  const arrSh=sh.getDataRange().getValues()
+
+  arrSh.splice(0, 3);
+  let ids=[]
+  arrSh.map(item=>ids.push(`"${item[1]}"`))
+  //Logger.log(ids) 
+
+  let month24=get_stats(730,ids);
+  let month12=get_stats(365,ids);
+  let days60=get_stats(60,ids);
+  let days14=get_stats(14,ids);
+  let days7=get_stats(7,ids);
+  let update=[]
+  
+  let products=get_products(merchant)
+if (ids.length>0){  
+for(let i=0; i<arrSh.length;i++){
+  if (arrSh[i][1]=="")break
+ const value=products.get(`${arrSh[i][1]}`) 
+ const price=value!=null?value.price:0
+ const itemMonth24=month24.has(`${arrSh[i][1]}`)?month24.get(`${arrSh[i][1]}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemMonth12=month12.has(`${arrSh[i][1]}`)?month12.get(`${arrSh[i][1]}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemDays60=days60.has(`${arrSh[i][1]}`)?days60.get(`${arrSh[i][1]}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemDays14=days14.has(`${arrSh[i][1]}`)?days14.get(`${arrSh[i][1]}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemDays7=days7.has(`${arrSh[i][1]}`)?days7.get(`${arrSh[i][1]}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ update.push([itemMonth24.roas,itemMonth12.roas,itemDays60.roas,itemDays14.roas,itemDays7.roas,
+              itemMonth24.spend,itemMonth12.spend,itemDays60.spend,itemDays14.spend,itemDays7.spend,
+              itemMonth24.cvr,itemMonth12.cvr,itemDays60.cvr,itemDays14.cvr,itemDays7.cvr,
+              itemMonth24.revenue,itemMonth12.revenue,itemDays60.revenue,itemDays14.revenue,itemDays7.revenue,
+              itemMonth24.conversions,itemMonth12.conversions,itemDays60.conversions,itemDays14.conversions,itemDays7.conversions,
+              itemMonth24.aov,itemMonth12.aov,itemDays60.aov,itemDays14.aov,itemDays7.aov,
+              itemMonth24.cpa,itemMonth12.cpa,itemDays60.cpa,itemDays14.cpa,itemDays7.cpa,
+              price-parseFloat(itemMonth24.aov),price-parseFloat(itemMonth12.aov),price-parseFloat(itemDays60.aov),price-parseFloat(itemDays14.aov),price-parseFloat(itemDays7.aov)
+             ])
+}
+  sh.getRange(4,4,update.length,update[0].length).setValues(update)
+  return
+}
+  //Logger.log('Here')
+let rows=[]  
+for (const [key, value] of products.entries()) {
+ const price=value.price
+ const title=value.title
+ const itemMonth24=month24.has(`${key}`)?month24.get(`${key}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemMonth12=month12.has(`${key}`)?month12.get(`${key}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemDays60=days60.has(`${key}`)?days60.get(`${key}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemDays14=days14.has(`${key}`)?days14.get(`${key}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ const itemDays7=days7.has(`${key}`)?days7.get(`${key}`):{roas:0, spend:0, cvr:0, revenue:0, conversions:0, aov:0, cpa:0}
+ rows.push([key,title,itemMonth24.roas,itemMonth12.roas,itemDays60.roas,itemDays14.roas,itemDays7.roas,
+              itemMonth24.spend,itemMonth12.spend,itemDays60.spend,itemDays14.spend,itemDays7.spend,
+              itemMonth24.cvr,itemMonth12.cvr,itemDays60.cvr,itemDays14.cvr,itemDays7.cvr,
+              itemMonth24.revenue,itemMonth12.revenue,itemDays60.revenue,itemDays14.revenue,itemDays7.revenue,
+              itemMonth24.conversions,itemMonth12.conversions,itemDays60.conversions,itemDays14.conversions,itemDays7.conversions,
+              itemMonth24.aov,itemMonth12.aov,itemDays60.aov,itemDays14.aov,itemDays7.aov,
+              itemMonth24.cpa,itemMonth12.cpa,itemDays60.cpa,itemDays14.cpa,itemDays7.cpa,
+              price-parseFloat(itemMonth24.aov),price-parseFloat(itemMonth12.aov),price-parseFloat(itemDays60.aov),price-parseFloat(itemDays14.aov),price-parseFloat(itemDays7.aov)
+             ])
+}
+//Logger.log(rows)
+  sh.getRange(4,2,rows.length,rows[0].length).setValues(rows)
+}
+
+function date_to_report(date2convert) {
+        var month = date2convert.getUTCMonth() + 1;
+        var day = date2convert.getUTCDate();
+        var year = date2convert.getUTCFullYear();
+        if (month < 10) month_string = "0" + month;
+        else month_string = month;
+        if (day < 10) day_string = "0" + day;
+        else day_string = day;
+        return year + '-' + month_string + '-' + day_string;
+}
+
+function get_stats(days, ids){
+  let info=new Map()
+  var end = new Date(Date.now()-86400000);
+  var start = new Date(end.getTime()  -  (days-1)*86400000);
+  let idsQuery = ids.length>0?`segments.product_item_id in (${ids.join(", ")}) AND`:""
+    var searchResults = AdsApp.search(
+      `SELECT
+  segments.product_item_id,
+  metrics.clicks,
+  metrics.cost_micros,
+  metrics.conversions_value,
+  metrics.conversions
+FROM  shopping_performance_view
+WHERE 
+${idsQuery}
+segments.date>= '${date_to_report(start)}' AND segments.date <= '${date_to_report(end)}'
+
+
+`);
+  
+  //segments.date DURING LAST_30_DAYS
+  
+  for (const row of searchResults) {
+    let item={}
+    /*if(row.segments.productItemId=="43016") {Logger.log(row)
+         Logger.log(days)                                   
+                                            }*/
+    if(row.segments==null) continue
+    item.roas=row.metrics.conversionsValue==null||row.metrics.costMicros==0?0:(parseFloat(row.metrics.conversionsValue)/(parseInt(row.metrics.costMicros)*0.000001)).toFixed(2)
+    item.spend=row.metrics.costMicros==null?0:(parseInt(row.metrics.costMicros)*0.000001).toFixed(2)
+    item.cvr=row.metrics.conversions==null||row.metrics.clicks==0?0:(parseFloat(row.metrics.conversions)*100/parseFloat(row.metrics.clicks)).toFixed(2)
+    item.revenue=row.metrics.conversionsValue==null?0:(parseFloat(row.metrics.conversionsValue)).toFixed(2)
+    item.conversions=row.metrics.conversions==null?0:(parseFloat(row.metrics.conversions)).toFixed(2)
+    item.aov=row.metrics.conversionsValue==null||row.metrics.conversions==0?0:(parseFloat(row.metrics.conversionsValue)/parseFloat(row.metrics.conversions)).toFixed(2)
+    item.cpa=row.metrics.costMicros==null||row.metrics.conversions==0?0:((parseInt(row.metrics.costMicros)*0.000001)/parseFloat(row.metrics.conversions)).toFixed(2)
+    info.set(row.segments.productItemId,item)
+  }
+  return info
+
+}
+
+function get_products(merchant){
+
+  var results=new Map();  
+  var pageToken;
+  var pageNum = 1;
+  var maxResults = 250;
+  
+  do {
+    var productList = ShoppingContent.Products.list(merchant, {
+      pageToken: pageToken,
+      maxResults: maxResults
+    });
+    
+    if (productList.resources) {
+      for (var i = 0; i < productList.resources.length; i++) {
+
+        results.set(`${productList.resources[i].offerId}`,{price:parseFloat(productList.resources[i].price.value), title:productList.resources[i].title})
+      }
+    }
+    pageToken = productList.nextPageToken;
+    pageNum++;
+  } while (pageToken);
+  
+  return results;
+  
+}
