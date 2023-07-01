@@ -18,7 +18,7 @@ This Google Ads script gathers various performance metrics for items in shopping
 <h2><strong></strong>Commands</h2>
 <ol>
 <li>The script contains one spreadsheet. And is a MCC-level script.</li>
-<li>Make a copy from the spreadsheet: Item-ID trend report.</li>
+<li>Make a copy of the spreadsheet: <a href=”https://docs.google.com/spreadsheets/d/1vGy4zD3tfGKRbJEhi-2SDzyqCb6pifK_TRGZ2By_bYk/copy”>Item-ID trend report: https://docs.google.com/spreadsheets/d/1vGy4zD3tfGKRbJEhi-2SDzyqCb6pifK_TRGZ2By_bYk/copy.</a></li>
 <li>Go to your MCC-account. Go to scripts. Insert the script and give it a descriptive name (Item ID analytics)</li>
 <li>In row 2, insert your spreadsheet copy URL from the Item-ID trend report.</li>
 <li>Open the spreadsheet and include both your Google Ads Client ID and Merchant Centre ID (Settings tab).</li>
